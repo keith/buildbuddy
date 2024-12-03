@@ -732,35 +732,35 @@ func MergeDiffSnapshot(ctx context.Context, baseSnapshotPath string, baseSnapsho
 					// continue with for loop
 				}
 				// 3 is the Linux constant for the SEEK_DATA option to lseek.
-				newOffset, err := syscall.Seek(int(gin.Fd()), offset, 3)
-				if err != nil {
-					// ENXIO is expected when the offset is within a hole at the end of
-					// the file.
-					if err == syscall.ENXIO {
-						if baseSnapshotStore != nil {
-							if err := baseSnapshotStore.UnmapChunk(offset); err != nil {
-								return err
-							}
-						}
-						break
-					}
-					return err
-				}
+				//newOffset, err := syscall.Seek(int(gin.Fd()), offset, 3)
+				//if err != nil {
+				//	// ENXIO is expected when the offset is within a hole at the end of
+				//	// the file.
+				//	if err == syscall.ENXIO {
+				//		if baseSnapshotStore != nil {
+				//			if err := baseSnapshotStore.UnmapChunk(offset); err != nil {
+				//				return err
+				//			}
+				//		}
+				//		break
+				//	}
+				//	return err
+				//}
 
-				if baseSnapshotStore != nil {
-					ogChunkStartOffset := baseSnapshotStore.ChunkStartOffset(offset)
-					newChunkStartOffset := baseSnapshotStore.ChunkStartOffset(newOffset)
+				//if baseSnapshotStore != nil {
+				//	ogChunkStartOffset := baseSnapshotStore.ChunkStartOffset(offset)
+				//	//newChunkStartOffset := baseSnapshotStore.ChunkStartOffset(newOffset)
+				//
+				//	// If we've seeked to a new chunk, unmap the previous chunk to save memory
+				//	// usage on the executor
+				//	if newChunkStartOffset != ogChunkStartOffset {
+				//		if err := baseSnapshotStore.UnmapChunk(offset); err != nil {
+				//			return err
+				//		}
+				//	}
+				//}
 
-					// If we've seeked to a new chunk, unmap the previous chunk to save memory
-					// usage on the executor
-					if newChunkStartOffset != ogChunkStartOffset {
-						if err := baseSnapshotStore.UnmapChunk(offset); err != nil {
-							return err
-						}
-					}
-				}
-
-				offset = newOffset
+				//offset = newOffset
 				if offset >= regionEnd {
 					break
 				}
@@ -1370,6 +1370,7 @@ func getBootArgs(vmConfig *fcpb.VMConfiguration) string {
 		"i8042.dumbkbd",
 		"tsc=reliable",
 		"ipv6.disable=1",
+		"lapic=notscdeadline",
 	}
 	if vmConfig.EnableNetworking {
 		kernelArgs = append(kernelArgs, machineIPBootArgs)
@@ -2243,6 +2244,7 @@ func (c *FirecrackerContainer) Exec(ctx context.Context, cmd *repb.Command, stdi
 		if err != nil {
 			log.Warningf("Failed to update balloon: %s", err)
 		}
+		time.Sleep(30 * time.Second)
 	}
 
 	result, vmHealthy := c.SendExecRequestToGuest(ctx, conn, cmd, workDir, stdio)
